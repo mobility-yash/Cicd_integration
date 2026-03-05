@@ -1,0 +1,137 @@
+name: "Build & Release"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+jobs:
+  android-build:
+    name: Build Android APK
+    runs-on: macos-latest
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v3
+
+      # Set up Java
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # Set up Flutter
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+
+      # Run Flutter Pub Get
+      - name: Run Flutter Pub Get
+        run: flutter pub get
+
+      # Build Android APK
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      # Check APK output
+      - name: List APK files
+        run: ls -al build/app/outputs/flutter-apk/
+
+      # Upload APK as Artifact
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      # Push APK to GitHub Release
+      - name: Create Release for Android
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: build/app/outputs/flutter-apk/app-release.apk
+          tag: android-v1.0.${{ github.run_number }}
+          token: ${{ secrets.TOKEN }}
+
+  ios-build:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v3
+
+      # Set up Java
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # Set up Flutter
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+
+      # Run Flutter Pub Get
+      - name: Run Flutter Pub Get
+        run: flutter pub get
+
+      # Install CocoaPods
+      - name: Install CocoaPods
+        run: pod install --project-directory=ios
+
+      # Set up Code Signing Certificate
+      - name: Import Code Signing Certificate
+        run: |
+          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > signing.p12
+          security create-keychain -p "github" build.keychain
+          security import signing.p12 -k build.keychain -P ${{ secrets.CERTIFICATE_PASSWORD }} -T /usr/bin/codesign
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "github" build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "github" build.keychain
+
+      # Install Provisioning Profile
+      - name: Install Provisioning Profile
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "${{ secrets.IOS_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      # Build iOS IPA with Code Signing
+      - name: Build iOS IPA
+        run: |
+          flutter build ios --release 
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            archive
+
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportOptionsPlist ios/exportOptions.plist \
+            -exportPath build/ios/output
+
+      # Check IPA output
+      - name: List IPA files
+        run: ls -al build/ios/output/
+
+      # Upload IPA as Artifact
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-ipa
+          path: build/ios/output/*.ipa
+
+      # Push IPA to GitHub Release
+      - name: Create Release for iOS
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: build/ios/output/*.ipa
+          tag: ios-v1.0.${{ github.run_number }}
+          token: ${{ secrets.TOKEN }}
