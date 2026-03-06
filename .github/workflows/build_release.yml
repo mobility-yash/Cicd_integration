@@ -43,7 +43,7 @@ jobs:
 
       # Upload APK as Artifact
       - name: Upload APK Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
@@ -123,7 +123,7 @@ jobs:
 
       # Upload IPA as Artifact
       - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
           path: build/ios/output/*.ipa
