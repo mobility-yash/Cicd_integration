@@ -1,0 +1,13 @@
+//
+//  prod.xcconfig
+//  Runner
+//
+//  Created by Rohan Karekar on 06/03/26.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug-prod.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.yash.example.checklist
+APP_NAME = Checklist

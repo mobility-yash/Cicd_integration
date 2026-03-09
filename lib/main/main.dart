@@ -5,10 +5,14 @@ import 'package:get/get.dart';
 import 'dart:io';
 
 void main() {
+  startApp("prod");
+}
+
+void startApp(String flavor) {
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }
-  runApp(MyApp());
+  runApp(MyApp(flavor: flavor));
 }
 
 
@@ -22,9 +26,14 @@ class MyHttpOverrides extends HttpOverrides {
 }
 
 class MyApp extends StatelessWidget {
+  final String flavor;
+
+  const MyApp({super.key, required this.flavor});
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      title: "Checklist ($flavor)",
       home: ChecklistScreen(),
     );
   }
