@@ -35,7 +35,7 @@ jobs:
 
       # Build Android APK
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --flavor prod -t lib/main/main_prod.dart
 
       # Check APK output
       - name: List APK files
@@ -102,12 +102,12 @@ jobs:
       # Build iOS IPA with Code Signing
       - name: Build iOS IPA
         run: |
-          flutter build ios --release 
+          flutter build ios --release --flavor prod -t lib/main/main_prod.dart
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
+            -scheme Runner-prod \
             -sdk iphoneos \
-            -configuration Release \
+            -configuration Release-prod \
             -archivePath build/ios/archive/Runner.xcarchive \
             archive
 
