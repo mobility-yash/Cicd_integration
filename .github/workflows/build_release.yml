@@ -117,13 +117,13 @@ jobs:
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-ipa
-          path: build/ios/output/*.ipa
+          name: ios-${{ matrix.flavor }}-ipa
+          path: build/ios/output/${{ matrix.flavor }}/*.ipa
 
       # Push IPA to GitHub Release
       - name: Create Release for iOS
         uses: ncipollo/release-action@v1
         with:
-          artifacts: build/ios/output/*.ipa
-          tag: ios-v1.0.${{ github.run_number }}
+          artifacts: build/ios/output/${{ matrix.flavor }}/*.ipa
+          tag: ios-${{ matrix.flavor }}-v1.0.${{ github.run_number }}
           token: ${{ secrets.TOKEN }}
