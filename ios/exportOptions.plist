@@ -8,8 +8,8 @@
 	<string>debugging</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>com.holcim.pot.minspect</key>
-		<string>Holcim NFC Profile</string>
+		<key>com.yash.example.checklist</key>
+		<string>Yash wildcard dev profile</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Development</string>
