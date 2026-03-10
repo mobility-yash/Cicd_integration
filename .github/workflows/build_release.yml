@@ -13,52 +13,43 @@ jobs:
   android-build:
     name: Build Android APK
     runs-on: macos-latest
+
+    strategy:
+      matrix:
+        flavor: [dev, qa, prod]
+
     steps:
-      # Checkout code
       - uses: actions/checkout@v3
 
-      # Set up Java
       - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # Set up Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          architecture: x64
 
-      # Run Flutter Pub Get
       - name: Run Flutter Pub Get
         run: flutter pub get
 
-      # Build Android APK
       - name: Build Android APK
-        run: flutter build apk --release --flavor prod -t lib/main/main_prod.dart
+        run: flutter build apk --release --flavor ${{ matrix.flavor }} -t lib/main/main_${{ matrix.flavor }}.dart
 
-      # Check APK output
-      - name: List APK files
-        run: ls -al build/app/outputs/flutter-apk/
-
-      # Upload APK as Artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      # Push APK to GitHub Release
-      - name: Create Release for Android
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: build/app/outputs/flutter-apk/app-release.apk
-          tag: android-v1.0.${{ github.run_number }}
-          token: ${{ secrets.TOKEN }}
+          name: android-${{ matrix.flavor }}-apk
+          path: build/app/outputs/flutter-apk/*.apk
 
   ios-build:
     name: Build iOS IPA
     runs-on: macos-latest
+
+    strategy:
+      matrix:
+        flavor: [dev, qa, prod]
+
     steps:
       # Checkout code
       - uses: actions/checkout@v3
@@ -99,23 +90,24 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${{ secrets.IOS_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
 
-      # Build iOS IPA with Code Signing
+      # Build iOS IPA
       - name: Build iOS IPA
         run: |
-          flutter build ios --release --flavor prod -t lib/main/main_prod.dart
+          flutter build ios --release --flavor ${{ matrix.flavor }} -t lib/main/main_${{ matrix.flavor }}.dart --no-codesign
+
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
-            -scheme Runner-prod \
+            -scheme Runner-${{ matrix.flavor }} \
             -sdk iphoneos \
-            -configuration Release-prod \
-            -archivePath build/ios/archive/Runner.xcarchive \
+            -configuration Release-${{ matrix.flavor }} \
+            -archivePath build/ios/archive/${{ matrix.flavor }}.xcarchive \
             archive
 
           xcodebuild \
             -exportArchive \
-            -archivePath build/ios/archive/Runner.xcarchive \
+            -archivePath build/ios/archive/${{ matrix.flavor }}.xcarchive \
             -exportOptionsPlist ios/exportOptions.plist \
-            -exportPath build/ios/output
+            -exportPath build/ios/output/${{ matrix.flavor }}
 
       # Check IPA output
       - name: List IPA files
